@@ -25,15 +25,19 @@ export default function ClubScreen() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          team: teamName,
-          section: activeTab,
+          teamName: teamName, // Utilisation de la clé correcte
+          tab: activeTab, // Utilisation de la clé correcte
         }),
       });
 
-      const text = await response.text();
-      setData(text);
+      if (!response.ok) {
+        throw new Error(`Erreur HTTP: ${response.status}`);
+      }
+
+      const result = await response.json();
+      setData(result.data); // Assurez-vous que le backend renvoie un champ `data`
     } catch (err) {
-      setData('❌ Erreur lors de la récupération.');
+      setData(`❌ Erreur lors de la récupération : ${err.message}`);
     } finally {
       setLoading(false);
     }
