@@ -9,7 +9,8 @@ import {
   FlatList,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { sendNotification } from '../utils/notification'; // Import du système de notifications
+import { sendNotification } from '../utils/notification';
+import { getFavorites, addFavorite } from '../utils/favorites';
 
 const sports = [
   { name: 'Football', emoji: '⚽' },
@@ -31,6 +32,7 @@ export default function HomeScreen() {
   const [selectedSport, setSelectedSport] = useState('Football');
   const [team, setTeam] = useState('');
   const [filteredSuggestions, setFilteredSuggestions] = useState([]);
+  const [favorites, setFavorites] = useState(getFavorites());
 
   const handleSearch = () => {
     if (team.trim()) {
@@ -49,6 +51,12 @@ export default function HomeScreen() {
     } else {
       setFilteredSuggestions([]);
     }
+  };
+
+  const handleAddFavorite = (teamName) => {
+    addFavorite(teamName);
+    setFavorites(getFavorites());
+    sendNotification('Favori ajouté', `${teamName} a été ajouté à vos favoris.`);
   };
 
   return (
@@ -94,6 +102,12 @@ export default function HomeScreen() {
               style={styles.suggestionItem}
             >
               <Text style={styles.suggestionText}>{item}</Text>
+              <TouchableOpacity
+                onPress={() => handleAddFavorite(item)}
+                style={styles.favoriteButton}
+              >
+                <Text style={styles.favoriteButtonText}>⭐</Text>
+              </TouchableOpacity>
             </TouchableOpacity>
           )}
           style={styles.suggestionsList}
@@ -103,6 +117,13 @@ export default function HomeScreen() {
       <TouchableOpacity style={styles.button} onPress={handleSearch}>
         <Text style={styles.buttonText}>Rechercher</Text>
       </TouchableOpacity>
+
+      <Text style={styles.favoritesHeader}>Vos favoris :</Text>
+      <FlatList
+        data={favorites}
+        keyExtractor={(item, index) => index.toString()}
+        renderItem={({ item }) => <Text style={styles.favoriteItem}>{item}</Text>}
+      />
     </View>
   );
 }
@@ -178,8 +199,28 @@ const styles = StyleSheet.create({
     padding: 10,
     borderBottomWidth: 1,
     borderBottomColor: '#333',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   suggestionText: {
     color: '#fff',
+  },
+  favoriteButton: {
+    padding: 5,
+  },
+  favoriteButtonText: {
+    color: '#ff0',
+    fontSize: 20,
+  },
+  favoritesHeader: {
+    color: '#fff',
+    fontSize: 18,
+    marginTop: 20,
+  },
+  favoriteItem: {
+    color: '#ccc',
+    fontSize: 16,
+    marginVertical: 5,
   },
 });

@@ -1,4 +1,4 @@
-const BASE_URL = 'https://proov-scraper.onrender.com'; // Remplacez par votre URL backend
+const BASE_URL = 'https://proov-scraper.onrender.com'; // Assurez-vous que cette URL est correcte et active
 
 /**
  * Récupère les données pour une équipe donnée et un onglet spécifique.
@@ -15,11 +15,21 @@ export async function fetchClubData(teamName, tab) {
     });
 
     if (!response.ok) {
+      console.error(`Erreur HTTP : ${response.status}`);
       throw new Error(`Erreur HTTP : ${response.status}`);
     }
 
-    return await response.json();
+    const data = await response.json();
+
+    // Vérifiez si les données sont valides
+    if (!data || Object.keys(data).length === 0) {
+      throw new Error('Données reçues invalides ou vides.');
+    }
+
+    return data;
   } catch (error) {
-    throw new Error('Erreur lors de la récupération des données:', error.message);
+    console.error('Erreur lors de la récupération des données:', error.message);
+    // Retournez un objet d'erreur pour éviter que l'application ne plante
+    return { error: true, message: error.message };
   }
 }
