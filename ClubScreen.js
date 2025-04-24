@@ -8,6 +8,8 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useRoute } from '@react-navigation/native';
+import { fetchClubData } from '../utils/api';
+import { sendNotification } from '../utils/notification';
 
 export default function ClubScreen() {
   const route = useRoute();
@@ -16,28 +18,24 @@ export default function ClubScreen() {
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState('');
 
-  const BASE_URL = 'https://proov-scraper.onrender.com/scrape';
+  const tabs = [
+    { name: 'resume', label: '📋 Résumé' },
+    { name: 'joueurs', label: '👥 Joueurs' },
+    { name: 'matchs', label: '⚽ Matchs' },
+    { name: 'calendrier', label: '🗓️ Calendrier' },
+    { name: 'paris', label: '💰 Paris' },
+    { name: 'live', label: '📡 Scores en Direct' }, // Nouvel onglet
+  ];
 
   const fetchData = async () => {
     setLoading(true);
     try {
-      const response = await fetch(BASE_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          teamName: teamName, // Utilisation de la clé correcte
-          tab: activeTab, // Utilisation de la clé correcte
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Erreur HTTP: ${response.status}`);
-      }
-
-      const result = await response.json();
-      setData(result.data); // Assurez-vous que le backend renvoie un champ `data`
+      const response = await fetchClubData(teamName, activeTab);
+      setData(response?.data || 'Aucune donnée disponible.');
+      sendNotification('Données chargées', `Les données pour l'onglet ${activeTab} sont prêtes.`);
     } catch (err) {
-      setData(`❌ Erreur lors de la récupération : ${err.message}`);
+      setData('❌ Erreur lors de la récupération des données.');
+      sendNotification('Erreur', 'Impossible de récupérer les données.');
     } finally {
       setLoading(false);
     }
@@ -50,17 +48,14 @@ export default function ClubScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.sidebar}>
-        {['resume', 'joueurs', 'matchs', 'calendrier'].map((tab) => (
+        {tabs.map((tab) => (
           <TouchableOpacity
-            key={tab}
-            onPress={() => setActiveTab(tab)}
-            style={[styles.tab, activeTab === tab && styles.activeTab]}
+            key={tab.name}
+            onPress={() => setActiveTab(tab.name)}
+            style={[styles.tab, activeTab === tab.name && styles.activeTab]}
           >
-            <Text style={activeTab === tab ? styles.activeText : styles.text}>
-              {tab === 'resume' && '📋 Résumé'}
-              {tab === 'joueurs' && '👥 Joueurs'}
-              {tab === 'matchs' && '⚽ Matchs'}
-              {tab === 'calendrier' && '🗓️ Calendrier'}
+            <Text style={activeTab === tab.name ? styles.activeText : styles.text}>
+              {tab.label}
             </Text>
           </TouchableOpacity>
         ))}

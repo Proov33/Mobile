@@ -6,8 +6,10 @@ import {
   TouchableOpacity,
   StyleSheet,
   Dimensions,
+  FlatList,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { sendNotification } from '../utils/notification'; // Import du système de notifications
 
 const sports = [
   { name: 'Football', emoji: '⚽' },
@@ -16,14 +18,36 @@ const sports = [
   { name: 'Hockey', emoji: '🏒' },
 ];
 
+const mockTeamSuggestions = [
+  'Paris Saint-Germain',
+  'Real Madrid',
+  'Manchester United',
+  'Bayern Munich',
+  'Barcelona',
+];
+
 export default function HomeScreen() {
   const navigation = useNavigation();
   const [selectedSport, setSelectedSport] = useState('Football');
   const [team, setTeam] = useState('');
+  const [filteredSuggestions, setFilteredSuggestions] = useState([]);
 
   const handleSearch = () => {
     if (team.trim()) {
+      sendNotification('Recherche en cours', `Recherche pour ${team}...`);
       navigation.navigate('Club', { teamName: team.trim(), sport: selectedSport });
+    }
+  };
+
+  const handleInputChange = (text) => {
+    setTeam(text);
+    if (text.length > 1) {
+      const suggestions = mockTeamSuggestions.filter((suggestion) =>
+        suggestion.toLowerCase().includes(text.toLowerCase())
+      );
+      setFilteredSuggestions(suggestions);
+    } else {
+      setFilteredSuggestions([]);
     }
   };
 
@@ -54,8 +78,27 @@ export default function HomeScreen() {
         placeholder="Entrez une équipe"
         placeholderTextColor="#aaa"
         value={team}
-        onChangeText={setTeam}
+        onChangeText={handleInputChange}
       />
+
+      {filteredSuggestions.length > 0 && (
+        <FlatList
+          data={filteredSuggestions}
+          keyExtractor={(item, index) => index.toString()}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              onPress={() => {
+                setTeam(item);
+                setFilteredSuggestions([]);
+              }}
+              style={styles.suggestionItem}
+            >
+              <Text style={styles.suggestionText}>{item}</Text>
+            </TouchableOpacity>
+          )}
+          style={styles.suggestionsList}
+        />
+      )}
 
       <TouchableOpacity style={styles.button} onPress={handleSearch}>
         <Text style={styles.buttonText}>Rechercher</Text>
@@ -124,5 +167,19 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#fff',
     fontWeight: 'bold',
+  },
+  suggestionsList: {
+    backgroundColor: '#222',
+    borderRadius: 8,
+    marginTop: 8,
+    maxHeight: 150,
+  },
+  suggestionItem: {
+    padding: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#333',
+  },
+  suggestionText: {
+    color: '#fff',
   },
 });
